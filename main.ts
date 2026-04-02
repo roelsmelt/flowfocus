@@ -28,6 +28,7 @@ export default class TodoPlugin extends Plugin {
       const todos: TodoItem[] = [];
       const props = {
         todos: todos,
+        settings: this.settings,
         formatDate: (date: DateTime) => {
           return this.dateFormatter.formatDate(date);
         },
@@ -75,6 +76,12 @@ export default class TodoPlugin extends Plugin {
     this.dateFormatter = new DateFormatter(this.settings.dateFormat);
     await this.saveData(this.settings);
     this.todoIndex.setSettings(settings);
+    if (this.view) {
+      this.view.setProps((currentProps: TodoItemViewProps) => ({
+        ...currentProps,
+        settings: settings,
+      }));
+    }
   }
 
   private async triggerIndex(): Promise<void> {

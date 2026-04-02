@@ -2,6 +2,7 @@ import { DateTime } from 'luxon';
 import { ItemView, MarkdownRenderer, WorkspaceLeaf } from 'obsidian';
 import { VIEW_TYPE_TODO } from '../constants';
 import { TodoItem, TodoItemStatus } from '../model/TodoItem';
+import { TodoPluginSettings } from '../model/TodoPluginSettings';
 import { RenderIcon, Icon } from '../ui/icons';
 
 enum TodoItemViewPane {
@@ -13,6 +14,7 @@ enum TodoItemViewPane {
 }
 export interface TodoItemViewProps {
   todos: TodoItem[];
+  settings: TodoPluginSettings;
   formatDate: (date: DateTime) => string;
   openFile: (filePath: string) => void;
   toggleTodo: (todo: TodoItem, newStatus: TodoItemStatus) => void;
@@ -114,7 +116,22 @@ export class TodoItemView extends ItemView {
       .filter(this.filterForState, this)
       .sort(isFocus ? this.sortForFocus : this.sortByActionDate);
     if (isFocus) {
-      items = items.slice(0, 5);
+      const maxItems = this.props.settings?.focusMaxItems ?? 5;
+      const rules = this.props.settings?.focusPriorityRules ?? [
+        { tag: 'urgent', max: 'all' as const },
+        { tag: 'lifegoal', max: 1 },
+        { tag: 'important', max: 'all' as const },
+      ];
+      let used: TodoItem[] = [];
+      let remaining = [...items];
+      for (const rule of rules) {
+        const matched = remaining.filter(t => t.description.includes('#' + rule.tag));
+        const limited = rule.max === 'all' ? matched : matched.slice(0, rule.max as number);
+        used = [...used, ...limited];
+        remaining = remaining.filter(t => !limited.includes(t));
+      }
+      const slots = Math.max(0, maxItems - used.length);
+      items = [...used, ...remaining.slice(0, slots)];
     }
     items.forEach((todo) => {
         container.createDiv('todo-item-view-item', (el) => {

@@ -1,7 +1,7 @@
 {
   "id": "flowfocus",
   "name": "FlowFocus",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "minAppVersion": "0.11.0",
   "description": "FlowGTD for Obsidian. Focus tab (max 5 tasks), Today, Upcoming, Inbox and Someday — powered by #YYYY-MM-DD tags.",
   "author": "Roel Smelt (fork of larslockefeer/obsidian-plugin-todo)",

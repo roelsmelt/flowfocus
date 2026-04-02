@@ -75,3 +75,22 @@ div.todo-item-view-item-link svg, div.todo-item-view-toolbar-item svg {
 div.todo-item-view-toolbar-item.active svg {
     fill: #7f6df2;
 }
+
+/* FlowFocus priority rules */
+.flowfocus-rules-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.flowfocus-rule-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.flowfocus-rule-row input[type="text"] {
+  flex: 1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--background-modifier-border);
+}
