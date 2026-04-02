@@ -5,6 +5,7 @@ import { TodoItem, TodoItemStatus } from '../model/TodoItem';
 import { RenderIcon, Icon } from '../ui/icons';
 
 enum TodoItemViewPane {
+  Focus,
   Today,
   Scheduled,
   Inbox,
@@ -29,7 +30,7 @@ export class TodoItemView extends ItemView {
     super(leaf);
     this.props = props;
     this.state = {
-      activePane: TodoItemViewPane.Today,
+      activePane: TodoItemViewPane.Focus,
     };
   }
 
@@ -85,6 +86,10 @@ export class TodoItemView extends ItemView {
       this.setViewState(newState);
     };
 
+    container.createDiv(`todo-item-view-toolbar-item${activeClass(TodoItemViewPane.Focus)}`, (el) => {
+      el.appendChild(RenderIcon(Icon.Focus, 'Focus'));
+      el.onClickEvent(() => setActivePane(TodoItemViewPane.Focus));
+    });
     container.createDiv(`todo-item-view-toolbar-item${activeClass(TodoItemViewPane.Today)}`, (el) => {
       el.appendChild(RenderIcon(Icon.Today, 'Today'));
       el.onClickEvent(() => setActivePane(TodoItemViewPane.Today));
@@ -104,10 +109,14 @@ export class TodoItemView extends ItemView {
   }
 
   private renderItems(container: HTMLDivElement) {
-    this.props.todos
+    const isFocus = this.state.activePane === TodoItemViewPane.Focus;
+    let items = this.props.todos
       .filter(this.filterForState, this)
-      .sort(this.sortByActionDate)
-      .forEach((todo) => {
+      .sort(isFocus ? this.sortForFocus : this.sortByActionDate);
+    if (isFocus) {
+      items = items.slice(0, 5);
+    }
+    items.forEach((todo) => {
         container.createDiv('todo-item-view-item', (el) => {
           el.createDiv('todo-item-view-item-checkbox', (el) => {
             el.createEl('input', { type: 'checkbox' }, (el) => {
@@ -155,6 +164,8 @@ export class TodoItemView extends ItemView {
     const isScheduledNote = !value.isSomedayMaybeNote && value.actionDate && !isTodayNote;
 
     switch (this.state.activePane) {
+      case TodoItemViewPane.Focus:
+        return isTodayNote;
       case TodoItemViewPane.Inbox:
         return !value.isSomedayMaybeNote && !isTodayNote && !isScheduledNote;
       case TodoItemViewPane.Scheduled:
@@ -164,6 +175,21 @@ export class TodoItemView extends ItemView {
       case TodoItemViewPane.Today:
         return isTodayNote;
     }
+  }
+
+  private sortForFocus(a: TodoItem, b: TodoItem): number {
+    const priority = (todo: TodoItem): number => {
+      if (todo.description.includes('#urgent')) return 0;
+      if (todo.description.includes('#important')) return 1;
+      return 2;
+    };
+    const pa = priority(a);
+    const pb = priority(b);
+    if (pa !== pb) return pa - pb;
+    if (!a.actionDate && !b.actionDate) return 0;
+    if (!a.actionDate) return 1;
+    if (!b.actionDate) return -1;
+    return a.actionDate < b.actionDate ? -1 : a.actionDate > b.actionDate ? 1 : 0;
   }
 
   private sortByActionDate(a: TodoItem, b: TodoItem): number {
